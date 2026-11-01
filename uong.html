@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ai Dính Thì Uống! - Hit or Drink Party Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none overflow-x-hidden">
+
+    <!-- Top Header -->
+    <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 sticky top-0 z-40 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🍻</span>
+            <h1 class="font-black text-lg tracking-wider bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-400 bg-clip-text text-transparent">AI DÍNH THÌ UỐNG!</h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="btn-sound" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition flex items-center space-x-1">
+                <span>🔊</span> <span id="sound-status">Bật</span>
+            </button>
+            <button id="btn-list" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition flex items-center space-x-1">
+                <span>📋</span> <span>Danh Sách (300)</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-lg w-full mx-auto px-4 py-6 flex flex-col justify-between">
+
+        <!-- Category Selector / Stats Bar -->
+        <div class="flex flex-col space-y-3 mb-4">
+            <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 shadow-inner">
+                <div class="flex flex-col">
+                    <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Chủ đề hiện tại</span>
+                    <span id="current-category-name" class="text-sm font-bold text-pink-400">Tất Cả 300 Thẻ</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-right">
+                        <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Còn lại</span>
+                        <div class="text-sm font-bold text-emerald-400"><span id="deck-count">300</span>/300</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Filter Horizontal Scroll -->
+            <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-none" id="category-filters">
+                <button data-cat="all" class="cat-btn whitespace-nowrap bg-pink-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-md transition">🔥 Tất Cả (300)</button>
+                <button data-cat="physical" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">👤 Ngoại Hình (50)</button>
+                <button data-cat="history" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">🌍 Lịch Sử (50)</button>
+                <button data-cat="tech" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">📱 Công Nghệ (50)</button>
+                <button data-cat="lifestyle" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">☕ Thói quen (50)</button>
+                <button data-cat="experience" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">🎭 Trải Nghiệm (50)</button>
+                <button data-cat="fun" class="cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition">🎉 Vui Nhộn (50)</button>
+            </div>
+        </div>
+
+        <!-- Card Draw Area -->
+        <div class="flex-1 flex items-center justify-center my-2">
+            <div id="game-card" class="w-full bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-2 border-slate-700/80 rounded-3xl p-6 md:p-8 card-shadow flex flex-col justify-between relative min-h-[320px] transition-all duration-300 transform cursor-pointer">
+                
+                <!-- Card Badge Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <span id="card-category-badge" class="bg-pink-500/20 border border-pink-500/40 text-pink-300 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase">Tất Cả</span>
+                    <span class="text-slate-500 text-xs font-bold" id="card-index-indicator">#1 / 300</span>
+                </div>
+
+                <!-- Card Trilingual Prompt Content -->
+                <div class="my-auto py-4 flex flex-col space-y-4 text-center">
+                    <h2 id="card-prompt-vi" class="text-xl md:text-2xl font-black text-white leading-snug">
+                        Nhấn nút bên dưới để rút thẻ thử thách đầu tiên!
+                    </h2>
+                    <p id="card-prompt-en" class="text-sm md:text-base italic text-indigo-300 font-medium">
+                        Tap the button below to draw your first challenge card!
+                    </p>
+                    <p id="card-prompt-zh" class="text-sm md:text-base text-emerald-300 font-normal">
+                        点击下方按钮抽取第一张挑战卡！
+                    </p>
+                </div>
+
+                <!-- Card Footer Instruction -->
+                <div class="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-semibold">
+                    <span>🍻 Ai dính tiêu chí này -> UỐNG!</span>
+                    <span class="text-pink-400">Hit = Drink!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls & Counters -->
+        <div class="mt-4 flex flex-col space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-draw" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-pink-900/30 active:scale-95 transition flex items-center justify-center space-x-2 text-base">
+                    <span>🎲 Rút Thẻ Tiếp</span>
+                </button>
+                <button id="btn-drink-counter" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-4 px-4 rounded-2xl transition flex items-center justify-center space-x-2 text-sm">
+                    <span>🍷 Tổng Uống: <strong id="drink-count-val" class="text-pink-400">0</strong> ly</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center justify-between px-2">
+                <button id="btn-reset-deck" class="text-xs text-slate-400 hover:text-slate-200 underline transition">
+                    🔄 Xáo Lại Toàn Bộ Bộ Thẻ
+                </button>
+                <button id="btn-add-custom" class="text-xs text-pink-400 hover:text-pink-300 font-semibold transition">
+                    ✨ Thêm Thẻ Mới
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Full List Modal -->
+    <div id="list-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex flex-col p-4 md:p-6">
+        <div class="max-w-xl w-full mx-auto bg-slate-900 border border-slate-800 rounded-3xl flex flex-col h-[90vh] shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <h3 class="font-bold text-base text-slate-100 flex items-center space-x-2">
+                    <span>📋</span> <span>Danh Sách Toàn Bộ Thẻ (<span id="modal-total-count">300</span>)</span>
+                </h3>
+                <button id="btn-close-modal" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-8 h-8 rounded-full flex items-center justify-center font-bold">✕</button>
+            </div>
+            <div class="p-4 border-b border-slate-800 bg-slate-900/80 flex flex-col space-y-2">
+                <input type="text" id="modal-search" placeholder="🔍 Tìm kiếm tiêu chí (Tiếng Việt, English, 中文)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+            </div>
+            <div id="modal-list-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-slate-100">✨ Thêm Thẻ Thử Thách Mới</h3>
+                <button id="btn-close-custom" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-8 h-8 rounded-full flex items-center justify-center font-bold">✕</button>
+            </div>
+            <div class="flex flex-col space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 font-semibold mb-1 block">Tiếng Việt (Bắt buộc)</label>
+                    <input type="text" id="custom-vi" placeholder="Ví dụ: Ai đang mặc áo sơ mi trắng?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-semibold mb-1 block">English Translation</label>
+                    <input type="text" id="custom-en" placeholder="e.g. Who is wearing a white shirt?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-semibold mb-1 block">Simplified Chinese (简体中文)</label>
+                    <input type="text" id="custom-zh" placeholder="例如：谁穿着白衬衫？" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-pink-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 font-semibold mb-1 block">Chủ đề</label>
+                    <select id="custom-cat" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-pink-500">
+                        <option value="fun">🎉 Vui Nhộn / Fun</option>
+                        <option value="physical">👤 Ngoại Hình / Physical</option>
+                        <option value="history">🌍 Lịch Sử / History</option>
+                        <option value="tech">📱 Công Nghệ / Tech</option>
+                        <option value="lifestyle">☕ Thói Quen / Lifestyle</option>
+                        <option value="experience">🎭 Trải Nghiệm / Experience</option>
+                    </select>
+                </div>
+            </div>
+            <button id="btn-save-custom" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl shadow-lg transition">Lưu & Thêm Vào Bộ Thẻ</button>
+        </div>
+    </div>
+
+    <!-- Game Completion Modal -->
+    <div id="completion-modal" class="fixed inset-0 bg-black/85 backdrop-blur-lg z-50 hidden flex flex-col items-center justify-center p-6 text-center animate-pulse-slow">
+        <div class="max-w-md w-full bg-slate-900 border-2 border-pink-500/80 rounded-3xl p-8 shadow-2xl flex flex-col items-center space-y-6 card-shadow">
+            <div class="text-5xl">🏆🍻</div>
+            <h2 class="text-2xl md:text-3xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                Chúc Mừng Hoàn Thành Game!
+            </h2>
+            <p class="text-base text-slate-200 font-medium leading-relaxed">
+                "congratulations game completed, everyone drink one cup!"
+            </p>
+            <div class="bg-pink-600/20 border border-pink-500/40 rounded-2xl p-4 w-full">
+                <p class="text-sm font-bold text-pink-300">🍻 Tất cả mọi người cùng nâng ly uống 1 ly!</p>
+            </div>
+            <button id="btn-restart-game" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-black py-4 rounded-2xl shadow-lg transition text-base">
+                🔄 Chơi Lại Từ Đầu / Play Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const baseItems = [
+            { id: 1, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai là người cao nhất trong phòng này?", en: "Who is the tallest person in this room?", zh: "这里谁最高？" },
+            { id: 2, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc đồ màu xanh lá?", en: "Who is wearing green right now?", zh: "谁现在穿着绿色衣服？" },
+            { id: 3, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo đồng hồ trên tay?", en: "Who is wearing a watch right now?", zh: "谁现在戴着手表？" },
+            { id: 4, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có sơn móng tay hoặc móng chân?", en: "Who has painted fingernails or toenails?", zh: "谁涂了指甲油或脚趾甲油？" },
+            { id: 5, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có hình xăm có thể nhìn thấy được?", en: "Who has a visible tattoo?", zh: "谁有可见的纹身？" },
+            { id: 6, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mang giày có dây giày?", en: "Who is wearing shoes with laces?", zh: "谁穿着有鞋带的鞋子？" },
+            { id: 7, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo kính cận hoặc kính áp tròng?", en: "Who is wearing glasses or contact lenses right now?", zh: "谁现在戴着眼镜或隐形眼镜？" },
+            { id: 8, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có mái tóc ngắn nhất phòng?", en: "Who has the shortest hair in the room?", zh: "这里谁的头发最短？" },
+            { id: 9, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo nhẫn hoặc trang sức trên người?", en: "Who is wearing rings or jewelry right now?", zh: "谁现在戴着戒指或首饰？" },
+            { id: 10, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc áo màu đen tối màu?", en: "Who is wearing a black shirt or top?", zh: "谁穿着黑色的衣服？" },
+            { id: 11, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có bấm lỗ tai hoặc khuyên trên cơ thể?", en: "Who has a pierced ear or body piercing?", zh: "谁有耳洞或身体穿孔？" },
+            { id: 12, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai là người thấp nhất trong phòng này?", en: "Who is the shortest person here?", zh: "这里谁最矮？" },
+            { id: 13, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có mái tóc xoăn tự nhiên?", en: "Who has natural curly hair?", zh: "谁天生卷发？" },
+            { id: 14, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang để râu hoặc râu quai nón?", en: "Who has a beard or stubble right now?", zh: "谁现在留着胡子？" },
+            { id: 15, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc quần jean hoặc đồ bò?", en: "Who is wearing denim jeans?", zh: "谁穿着牛仔裤？" },
+            { id: 16, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mang vớ có họa tiết hoặc màu sặc sỡ?", en: "Who is wearing socks with patterns or designs?", zh: "谁穿着有图案或设计的袜子？" },
+            { id: 17, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc quần đùi / quần short?", en: "Who is wearing shorts?", zh: "谁穿着短裤？" },
+            { id: 18, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có má lúm đồng tiền khi cười?", en: "Who has dimples when they smile?", zh: "谁笑起来有酒窝？" },
+            { id: 19, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang thắt dây nịt / thắt lưng?", en: "Who is wearing a belt?", zh: "谁系着腰带？" },
+            { id: 20, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có mái tóc dài nhất phòng?", en: "Who has the longest hair in the room?", zh: "这里谁的头发最长？" },
+            { id: 21, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc áo có cổ (áo polo)?", en: "Who is wearing a collared polo shirt?", zh: "谁穿着有领的Polo衫？" },
+            { id: 22, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mang dép lê hoặc dép quai hậu?", en: "Who is wearing sandals or slippers?", zh: "谁穿着凉鞋或拖鞋？" },
+            { id: 23, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có màu mắt sáng hoặc khác biệt?", en: "Who has light-colored or distinctive eyes?", zh: "谁的眼睛颜色较浅或与众不同？" },
+            { id: 24, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đội mũ hoặc nón trên đầu?", en: "Who is wearing a hat or cap right now?", zh: "谁现在戴着帽子？" },
+            { id: 25, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc áo khoác lúc này?", en: "Who is wearing a jacket right now?", zh: "谁现在穿着外套？" },
+            { id: 26, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có nốt ruồi rõ trên mặt?", en: "Who has a prominent mole on their face?", zh: "谁脸上有明显的痣？" },
+            { id: 27, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang sơn tóc màu sáng (không phải đen)?", en: "Who has dyed hair in a bright color?", zh: "谁染了鲜艳的头发颜色？" },
+            { id: 28, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo dây chuyền vòng cổ?", en: "Who is wearing a necklace?", zh: "谁戴着项链？" },
+            { id: 29, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo vòng tay hoặc lắc tay?", en: "Who is wearing a bracelet?", zh: "谁戴着手链？" },
+            { id: 30, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có chiều cao trung bình sát với bạn nhất?", en: "Who has a height closest to yours?", zh: "谁的身高和你最接近？" },
+            { id: 31, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc quần áo có sọc ngang hoặc sọc dọc?", en: "Who is wearing striped clothing?", zh: "谁穿着条纹衣服？" },
+            { id: 32, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc áo có in hình đồ họa / logo lớn?", en: "Who is wearing a graphic tee with a large logo?", zh: "谁穿着印有大Logo的T恤？" },
+            { id: 33, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có dáng đi nhanh nhẹn nhất nhóm?", en: "Who has the fastest walking pace in the group?", zh: "谁走路步速最快？" },
+            { id: 34, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có giọng nói trầm ấm nhất bàn?", en: "Who has the deepest voice at the table?", zh: "谁的声音最低沉温暖？" },
+            { id: 35, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có tiếng cười lớn và vang nhất?", en: "Who has the loudest and most echoing laugh?", zh: "谁的笑声最大最响亮？" },
+            { id: 36, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mang giày thể thao trắng?", en: "Who is wearing white sneakers?", zh: "谁穿着白色的运动鞋？" },
+            { id: 37, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có ngón tay dài thon?", en: "Who has long, slender fingers?", zh: "谁的手指修长？" },
+            { id: 38, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có má hơi phúng phính dễ thương?", en: "Who has cute chubby cheeks?", zh: "谁长着可爱的婴儿肥脸颊？" },
+            { id: 39, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc đồ màu đỏ hoặc hồng?", en: "Who is wearing red or pink clothing?", zh: "谁穿着红色或粉红色的衣服？" },
+            { id: 40, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc đồ màu xanh dương?", en: "Who is wearing blue clothing?", zh: "谁穿着蓝色的衣服？" },
+            { id: 41, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có lông mày rậm sắc nét?", en: "Who has thick and sharp eyebrows?", zh: "谁的眉毛浓密立体？" },
+            { id: 42, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có hàng mi dài?", en: "Who has long eyelashes?", zh: "谁拥有长睫毛？" },
+            { id: 43, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang để tóc mái che trán?", en: "Who has bangs covering their forehead?", zh: "谁留着刘海遮住额头？" },
+            { id: 44, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang vén tóc gọn gàng ra sau tai?", en: "Who has their hair tucked behind their ears?", zh: "谁把头发别在耳朵后面？" },
+            { id: 45, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có vóc dáng thể thao săn chắc nhất?", en: "Who has the most athletic and toned build?", zh: "谁的身材最健美？" },
+            { id: 46, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mặc áo thun trơn không có họa tiết?", en: "Who is wearing a plain solid-color t-shirt?", zh: "谁穿着纯色无图案的T恤？" },
+            { id: 47, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang đeo kính mát trên đầu hoặc ngực áo?", en: "Who is wearing sunglasses on their head or shirt?", zh: "谁把太阳镜挂在头上或衣领上？" },
+            { id: 48, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có dáng ngồi thẳng lưng chuẩn nhất?", en: "Who has the straightest and most upright posture?", zh: "谁坐姿最挺拔？" },
+            { id: 49, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai đang mang vớ ngắn cổ ẩn trong giày?", en: "Who is wearing low-cut hidden socks?", zh: "谁穿着隐形短袜？" },
+            { id: 50, cat: 'physical', catName: 'Ngoại Hình', vi: "Ai có phong cách thời trang nổi bật nhất đêm nay?", en: "Who has the most standout fashion style tonight?", zh: "谁今晚的时尚穿搭最出众？" },
+
+            { id: 51, cat: 'history', catName: 'Lịch Sử', vi: "Ai có nhà ở gần địa điểm này nhất?", en: "Whose house is nearest to this location?", zh: "谁的家离这里最近？" },
+            { id: 52, cat: 'history', catName: 'Lịch Sử', vi: "Ai có nhà ở xa địa điểm này nhất?", en: "Whose house is farthest from this location?", zh: "谁的家离这里最远？" },
+            { id: 53, cat: 'history', catName: 'Lịch Sử', vi: "Ai là người lớn tuổi nhất trong phòng?", en: "Who is the oldest person in the room?", zh: "这里谁年纪最大？" },
+            { id: 54, cat: 'history', catName: 'Lịch Sử', vi: "Ai là người nhỏ tuổi nhất trong phòng?", en: "Who is the youngest person in the room?", zh: "这里谁年纪最小？" },
+            { id: 55, cat: 'history', catName: 'Lịch Sử', vi: "Ai sinh vào tháng có số chẵn (tháng 2, 4, 6...)?", en: "Who was born in an even-numbered month?", zh: "谁出生在偶数月份（2、4、6月等）？" },
+            { id: 56, cat: 'history', catName: 'Lịch Sử', vi: "Ai là con một trong gia đình?", en: "Who is an only child?", zh: "谁是独生子女？" },
+            { id: 57, cat: 'history', catName: 'Lịch Sử', vi: "Ai có nhiều anh chị em nhất?", en: "Who has the most siblings?", zh: "谁的兄弟姐妹最多？" },
+            { id: 58, cat: 'history', catName: 'Lịch Sử', vi: "Ai thuận tay trái?", en: "Who is left-handed?", zh: "谁是左撇子？" },
+            { id: 59, cat: 'history', catName: 'Lịch Sử', vi: "Ai có sinh nhật vào tháng tới?", en: "Who has a birthday coming up next month?", zh: "谁下个月过生日？" },
+            { id: 60, cat: 'history', catName: 'Lịch Sử', vi: "Ai sinh vào tháng hiện tại?", en: "Who was born in the current month?", zh: "谁出生在当前这个月份？" },
+            { id: 61, cat: 'history', catName: 'Lịch Sử', vi: "Ai đang nuôi mèo cưng ở nhà?", en: "Who currently owns a pet cat?", zh: "谁家里养了宠物猫？" },
+            { id: 62, cat: 'history', catName: 'Lịch Sử', vi: "Ai đang nuôi chó cưng ở nhà?", en: "Who currently owns a pet dog?", zh: "谁家里养了宠物狗？" },
+            { id: 63, cat: 'history', catName: 'Lịch Sử', vi: "Ai đã từng sống ở hơn 2 quốc gia hoặc thành phố lớn?", en: "Who has lived in more than two countries or cities?", zh: "谁曾在两个以上的国家或大城市居住过？" },
+            { id: 64, cat: 'history', catName: 'Lịch Sử', vi: "Ai đã kết hôn hoặc đã đính hôn?", en: "Who is married or engaged?", zh: "谁已经结婚或订婚了？" },
+            { id: 65, cat: 'history', catName: 'Lịch Sử', vi: "Ai đang độc thân vui tính?", en: "Who is currently single?", zh: "谁目前单身？" },
+            { id: 66, cat: 'history', catName: 'Lịch Sử', vi: "Ai có tên đệm bắt đầu bằng chữ cái nguyên âm (A, E, I, O, U)?", en: "Who has a middle name starting with a vowel?", zh: "谁的中间名或名字首字母是元音开头的？" },
+            { id: 67, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng học chung trường hoặc đại học với ai đó ở đây?", en: "Who went to school or university with someone here?", zh: "谁和在场的某人曾经是同学？" },
+            { id: 68, cat: 'history', catName: 'Lịch Sử', vi: "Ai có thể nói thành thạo hơn 2 ngôn ngữ?", en: "Who speaks more than two languages fluently?", zh: "谁能流利说两种以上的语言？" },
+            { id: 69, cat: 'history', catName: 'Lịch Sử', vi: "Ai có tên dài hơn 6 ký tự?", en: "Who has a full name with more than 6 letters/characters?", zh: "谁的名字超过6个字符？" },
+            { id: 70, cat: 'history', catName: 'Lịch Sử', vi: "Ai sinh ra ở một tỉnh thành khác với nơi bạn đang sống?", en: "Who was born in a different city/state than where you live now?", zh: "谁出生在外地或外省？" },
+            { id: 71, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng làm lớp trưởng hoặc cán bộ lớp khi đi học?", en: "Who was a class monitor or student leader in school?", zh: "谁在学校当过班长或学生干部？" },
+            { id: 72, cat: 'history', catName: 'Lịch Sử', vi: "Ai có họ hàng làm việc trong ngành y tế / bác sĩ?", en: "Who has relatives working in healthcare or as a doctor?", zh: "谁家有亲戚从事医疗行业或当医生？" },
+            { id: 73, cat: 'history', catName: 'Lịch Sử', vi: "Ai là người nhỏ con nhất trong số anh chị em ruột?", en: "Who is the youngest among their siblings?", zh: "谁是兄弟姐妹里年纪最小的？" },
+            { id: 74, cat: 'history', catName: 'Lịch Sử', vi: "Ai là anh chị Cả trong gia đình?", en: "Who is the eldest sibling in their family?", zh: "谁是家里的长子或长女？" },
+            { id: 75, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng chuyển nhà nhiều hơn 3 lần trong đời?", en: "Who has moved houses more than 3 times in their life?", zh: "谁一生中搬过3次以上的家？" },
+            { id: 76, cat: 'history', catName: 'Lịch Sử', vi: "Ai có bằng lái xe ô tô?", en: "Who holds a car driver's license?", zh: "谁拥有汽车驾驶证？" },
+            { id: 77, cat: 'history', catName: 'Lịch Sử', vi: "Ai biết lái xe máy phân khối lớn?", en: "Who knows how to ride a heavy/large displacement motorbike?", zh: "谁会骑大排量摩托车？" },
+            { id: 78, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng tham gia đội tuyển thể thao của trường?", en: "Who used to be on a school sports team?", zh: "谁曾代表学校参加过运动队？" },
+            { id: 79, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng đạt giải thưởng học sinh giỏi hoặc thi thố?", en: "Who has won an academic or competition award?", zh: "谁曾获得过学术奖项或竞赛奖？" },
+            { id: 80, cat: 'history', catName: 'Lịch Sử', vi: "Ai có chiều cao vượt trội hơn hẳn bố mẹ mình?", en: "Who is significantly taller than both of their parents?", zh: "谁的身高明显超过了父母？" },
+            { id: 81, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng nuôi thú cưng lạ như bò sát, hamster, nhím?", en: "Who has ever owned an exotic pet like a hamster or reptile?", zh: "谁曾养过仓鼠、爬行动物等奇特宠物？" },
+            { id: 82, cat: 'history', catName: 'Lịch Sử', vi: "Ai có tên trùng với một người nổi tiếng hoặc ca sĩ?", en: "Who shares a name with a celebrity or famous singer?", zh: "谁的名字与某位名星或歌手同名？" },
+            { id: 83, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng bị lạc trong trung tâm thương mại khi còn nhỏ?", en: "Who ever got lost in a shopping mall as a child?", zh: "谁小时候曾在商场里迷路过？" },
+            { id: 84, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng đi du lịch nước ngoài một mình (solo travel)?", en: "Who has ever traveled abroad completely solo?", zh: "谁曾独自一人出国旅行？" },
+            { id: 85, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng làm thêm thời sinh viên ở quán trà sữa / nhà hàng?", en: "Who worked part-time at a bubble tea shop or restaurant as a student?", zh: "谁学生时代曾在奶茶店或餐厅打过工？" },
+            { id: 86, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng tham gia hiến máu nhân đạo?", en: "Who has ever donated blood voluntarily?", zh: "谁曾参与过无偿献血？" },
+            { id: 87, cat: 'history', catName: 'Lịch Sử', vi: "Ai có sở thích sưu tầm tem, tiền xu hoặc mô hình?", en: "Who likes collecting stamps, coins, or action figures?", zh: "谁有收集邮票、硬币或手办的爱好？" },
+            { id: 88, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng bị nhầm là người nước ngoài ngoài đời thực?", en: "Who has ever been mistaken for a foreigner in real life?", zh: "谁在现实生活中曾被误认为外国人？" },
+            { id: 89, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng có biệt danh (nickname) cực kỳ hài hước thời đi học?", en: "Who had a hilarious nickname back in school days?", zh: "谁上学时有个极其搞笑的外号？" },
+            { id: 90, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng quên bẵng ngày sinh nhật của chính mình?", en: "Who has ever genuinely forgotten their own birthday?", zh: "谁曾真正忘记过自己的生日？" },
+            { id: 91, cat: 'history', catName: 'Lịch Sử', vi: "Ai biết bơi lội từ khi còn rất nhỏ (dưới 10 tuổi)?", en: "Who learned how to swim at a very young age (under 10)?", zh: "谁在很小的时候（10岁以下）就学会了游泳？" },
+            { id: 92, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng bị ngã xe đạp đau điếng thời thơ ấu?", en: "Who suffered a painful bicycle fall during childhood?", zh: "谁童年时曾狠狠地从自行车上摔下来过？" },
+            { id: 93, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng tự tay trồng cây xanh và để cây chết?", en: "Who has ever tried growing a plant and accidentally killed it?", zh: "谁曾亲手种植物却不小心养死了？" },
+            { id: 94, cat: 'history', catName: 'Lịch Sử', vi: "Ai có chiều cao bằng với giày dép cộng lại cao hơn bạn?", en: "Who is taller than you only because of their shoes?", zh: "谁靠鞋底厚度才比你高？" },
+            { id: 95, cat: 'history', catName: 'Lịch Sử', vi: "Ai sinh vào mùa hè (tháng 6, 7, 8)?", en: "Who was born in the summer months (June, July, August)?", zh: "谁出生在夏季（6、7、8月）？" },
+            { id: 96, cat: 'history', catName: 'Lịch Sử', vi: "Ai sinh vào mùa đông (tháng 12, 1, 2)?", en: "Who was born in the winter months (December, January, February)?", zh: "谁出生在冬季（12、1、2月）？" },
+            { id: 97, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng có tên Facebook/Instagram trẻ trâu hồi cấp 2?", en: "Who had an embarrassing cringe social media name in middle school?", zh: "谁初中时用过非常中二非主流的社交账号名？" },
+            { id: 98, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng nuôi tóc dài thướt tha hồi trẻ?", en: "Who used to rock very long hair in their youth?", zh: "谁年轻时留过长发？" },
+            { id: 99, cat: 'history', catName: 'Lịch Sử', vi: "Ai từng đạt học sinh xuất sắc 12 năm liền?", en: "Who was an straight-A honor student for 12 consecutive years?", zh: "谁连续12年都是三好学生或优秀生？" },
+            { id: 100, cat: 'history', catName: 'Lịch Sử', vi: "Ai là người có họ phổ biến nhất trong phòng này?", en: "Who has the most common surname/family name in this room?", zh: "这里谁的姓氏最常见？" },
+
+            { id: 101, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang có pin điện thoại thấp nhất hiện tại?", en: "Who has the lowest phone battery percentage right now?", zh: "谁目前手机电量最低？" },
+            { id: 102, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang có pin điện thoại cao nhất hiện tại?", en: "Who has the highest phone battery percentage right now?", zh: "谁目前手机电量最高？" },
+            { id: 103, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã từng làm nứt hoặc vỡ màn hình điện thoại?", en: "Who has cracked their phone screen before?", zh: "谁曾经摔碎过手机屏幕？" },
+            { id: 104, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có hơn 50 tin nhắn hoặc email chưa đọc lúc này?", en: "Who has more than 50 unread messages or emails right now?", zh: "谁现在有超过50条未读短信或邮件？" },
+            { id: 105, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã đăng bài hoặc story lên mạng xã hội hôm nay?", en: "Who posted on social media today?", zh: "谁今天在社交媒体上发了动态或Story？" },
+            { id: 106, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang sử dụng điện thoại iPhone?", en: "Who is using an iPhone right now?", zh: "谁现在用的是苹果iPhone手机？" },
+            { id: 107, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang sử dụng điện thoại Android?", en: "Who is using an Android phone right now?", zh: "谁现在用的是安卓Android手机？" },
+            { id: 108, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang đeo tai nghe không dây quanh cổ hoặc trong tai?", en: "Who is currently wearing wireless earbuds or AirPods?", zh: "谁现在戴着无线耳机或AirPods？" },
+            { id: 109, cat: 'tech', catName: 'Công Nghệ', vi: "Ai để hình nền điện thoại là hình thú cưng của mình?", en: "Who has a photo of their pet as their phone wallpaper?", zh: "谁把手机壁纸设置成了自家宠物照片？" },
+            { id: 110, cat: 'tech', catName: 'Công Nghệ', vi: "Ai để hình nền điện thoại là ảnh selfie chính mình?", en: "Who has a selfie as their phone lock screen or wallpaper?", zh: "谁把手机壁纸设置成了自己的自拍照？" },
+            { id: 111, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã lướt TikTok hoặc Instagram Reels trong 1 giờ qua?", en: "Who has been browsing TikTok or IG Reels in the last hour?", zh: "谁在过去一小时内刷过TikTok或抖音/短视频？" },
+            { id: 112, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã cài sẵn báo thức cho sáng mai?", en: "Who has already set an alarm for tomorrow morning?", zh: "谁已经设置好了明天早上的闹钟？" },
+            { id: 113, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có trên 1.000 bức ảnh trong cuộn camera điện thoại?", en: "Who has over 1,000 photos in their phone camera roll?", zh: "谁手机相册里存有超过1000张照片？" },
+            { id: 114, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang bật chế độ Im lặng / Rung cho điện thoại?", en: "Who has their phone on Silent or Vibrate mode right now?", zh: "谁的手机现在处于静音或震动模式？" },
+            { id: 115, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã sử dụng AI chatbot (như ChatGPT/Gemini) hôm nay?", en: "Who has used an AI chatbot today?", zh: "谁今天使用过AI人工智能聊天助手？" },
+            { id: 116, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang tham gia hơn 10 nhóm chat (group chat) hoạt động?", en: "Who is in more than 10 active group chats?", zh: "谁加入了超过10个活跃的聊天群组？" },
+            { id: 117, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã chơi trò chơi điện tử trên điện thoại hôm nay?", en: "Who has played a mobile game today?", zh: "谁今天玩过手机游戏？" },
+            { id: 118, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đang đeo đồng hồ thông minh hoặc vòng tay thể thao?", en: "Who is wearing a smartwatch or fitness tracker right now?", zh: "谁现在戴着智能手表或运动手环？" },
+            { id: 119, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã nghe podcast hoặc sách nói trong tuần này?", en: "Who has listened to a podcast or audiobook this week?", zh: "谁这周听过播客或有声书？" },
+            { id: 120, cat: 'tech', catName: 'Công Nghệ', vi: "Ai đã mua sắm trực tuyến (Shopee/Lazada/Amazon) tuần này?", en: "Who made an online shopping purchase this week?", zh: "谁这周在网上进行过网购下单？" },
+            { id: 121, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng làm mất điện thoại trong đời ít nhất một lần?", en: "Who has ever lost their phone in their life at least once?", zh: "谁一生中至少丢过一次手机？" },
+            { id: 122, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng quên mật khẩu tài khoản quan trọng phải bấm quên mật khẩu?", en: "Who has ever had to click 'Forgot Password' for an important account?", zh: "谁曾因为忘记重要账号密码而点过找回密码？" },
+            { id: 123, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có thói quen sạc điện thoại qua đêm đến sáng?", en: "Who has the habit of leaving their phone charging overnight?", zh: "谁有习惯把手机充整夜电直到天亮？" },
+            { id: 124, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng đánh rơi điện thoại xuống bồn cầu hoặc nước?", en: "Who has ever dropped their phone into a toilet or water?", zh: "谁曾把手机掉进马桶或水里过？" },
+            { id: 125, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có dung lượng bộ nhớ điện thoại sắp đầy (báo đỏ)?", en: "Who has almost full phone storage capacity right now?", zh: "谁的手机存储空间快要满了？" },
+            { id: 126, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng vô tình gửi nhầm tin nhắn cho sếp hoặc người yêu cũ?", en: "Who has ever accidentally sent a wrong text to their boss or ex?", zh: "谁曾不小心把信息发错给老板或前任？" },
+            { id: 127, cat: 'tech', catName: 'Công Nghệ', vi: "Ai bật thông báo (notification) cho tất cả các app?", en: "Who has notifications turned ON for every single app?", zh: "谁为所有应用程序都打开了消息通知？" },
+            { id: 128, cat: 'tech', catName: 'Công Nghệ', vi: "Ai thường xuyên bật chế độ Không làm phiền (Do Not Disturb)?", en: "Who frequently keeps their phone on Do Not Disturb mode?", zh: "谁经常开启请勿打扰模式？" },
+            { id: 129, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng mua app hoặc game trả phí trên App Store/Google Play?", en: "Who has ever bought paid apps or games on App Store/Google Play?", zh: "谁曾在应用商店买过付费APP或游戏？" },
+            { id: 130, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng quét mã QR nhầm trang web lừa đảo / quảng cáo?", en: "Who has ever scanned a suspicious QR code leading to weird sites?", zh: "谁曾扫过奇怪的二维码进入过奇怪的网站？" },
+            { id: 131, cat: 'tech', catName: 'Công Nghệ', vi: "Ai dùng chung một mật khẩu cho hầu hết mọi tài khoản?", en: "Who uses the exact same password for almost all accounts?", zh: "谁几乎所有账号都用同一个密码？" },
+            { id: 132, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có dán cường lực điện thoại đã bị mẻ góc?", en: "Who has a chipped screen protector on their phone?", zh: "谁的手机钢化膜边缘已经碎了或磕缺了？" },
+            { id: 133, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng chụp màn hình tin nhắn bí mật của ai đó để gửi cho người thứ ba?", en: "Who has ever screenshotted private chats to send to someone else?", zh: "谁曾截屏别人的私聊记录发给第三个人？" },
+            { id: 134, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng vừa sạc pin vừa chơi game nặng làm máy nóng rực?", en: "Who has played heavy games while charging, making the phone super hot?", zh: "谁曾一边充电一边玩大型游戏导致手机发烫？" },
+            { id: 135, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có tài khoản mạng xã hội phụ (clone/nick ảo) để stalk người khác?", en: "Who has a burner/secret social media account to stalk people?", zh: "谁有小号用来偷偷关注或看别人动态？" },
+            { id: 136, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng xem trộm điện thoại của người yêu hoặc bạn bè?", en: "Who has ever snooped through a partner's or friend's phone?", zh: "谁曾偷看伴侣或朋友的手机？" },
+            { id: 137, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng lỡ tay bấm like bài viết cũ từ nhiều năm trước của crush?", en: "Who accidentally liked an old post from years ago of their crush?", zh: "谁曾手滑点赞了暗恋对象几年前的老动态？" },
+            { id: 138, cat: 'tech', catName: 'Công Nghệ', vi: "Ai để màn hình sáng tối đa (100%) khi dùng ban đêm?", en: "Who keeps their phone screen brightness at 100% at night?", zh: "谁在晚上用手机时把屏幕亮度调到100%？" },
+            { id: 139, cat: 'tech', catName: 'Công Nghệ', vi: "Ai chưa từng sao lưu (backup) dữ liệu điện thoại lần nào?", en: "Who has never backed up their phone data in their life?", zh: "谁从来没有备份过手机数据？" },
+            { id: 140, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có hơn 10 tab trình duyệt Safari/Chrome đang mở ngầm?", en: "Who has over 10 browser tabs open in the background?", zh: "谁浏览器后台开着超过10个网页标签？" },
+            { id: 141, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng để quên điện thoại ở quán cà phê hoặc taxi?", en: "Who has ever left their phone behind in a cafe or taxi?", zh: "谁曾把手机遗忘在咖啡馆或出租车上？" },
+            { id: 142, cat: 'tech', catName: 'Công Nghệ', vi: "Ai dùng tai nghe có dây truyền thống (không phải bluetooth)?", en: "Who uses traditional wired earphones instead of bluetooth?", zh: "谁还在使用传统的有线耳机而不是蓝牙耳机？" },
+            { id: 143, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có dung lượng 4G/5G hàng tháng bị dùng quá hạn mức?", en: "Who regularly exceeds their monthly mobile data quota?", zh: "谁每月的手机流量经常不够用超额？" },
+            { id: 144, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng bấm nhầm gọi điện cho ai đó khi điện thoại để trong túi quần?", en: "Who has ever made a accidental pocket dial to someone?", zh: "谁的手机放在裤兜里时曾不小心误拨过电话给别人？" },
+            { id: 145, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có thói quen đọc tin nhắn từ màn hình khóa mà không mở app?", en: "Who reads messages directly from the lock screen without opening apps?", zh: "谁习惯直接在锁屏界面预览信息而不打开APP？" },
+            { id: 146, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng bị hack tài khoản mạng xã hội ít nhất một lần?", en: "Who has ever had their social media account hacked at least once?", zh: "谁的社交媒体账号至少被黑客入侵过一次？" },
+            { id: 147, cat: 'tech', catName: 'Công Nghệ', vi: "Ai cài đặt vân tay hoặc khuôn mặt của người yêu vào điện thoại mình?", en: "Who has registered their partner's fingerprint or face ID on their phone?", zh: "谁在自己手机里录入了伴侣的指纹或面容解锁？" },
+            { id: 148, cat: 'tech', catName: 'Công Nghệ', vi: "Ai có ứng dụng đếm bước chân hoặc theo dõi sức khỏe chạy mỗi ngày?", en: "Who runs a daily step counter or health tracking app?", zh: "谁每天都用计步器或健康追踪软件？" },
+            { id: 149, cat: 'tech', catName: 'Công Nghệ', vi: "Ai từng mua sạc dự phòng dung lượng khủng nhưng suốt ngày quên sạc nó?", en: "Who bought a huge power bank but always forgets to charge it?", zh: "谁买了大容量充电宝却总是忘记给它充电？" },
+            { id: 150, cat: 'tech', catName: 'Công Nghệ', vi: "Ai là "thánh công nghệ" được bạn bè gọi mỗi khi máy móc hỏng?", en: "Who is the go-to "tech guru" friends call whenever devices break?", zh: "谁是朋友手机或电脑坏了时第一个找的“科技专家”？" },
+
+            { id: 151, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã uống cà phê hoặc trà sữa hôm nay?", en: "Who drank coffee or boba tea today?", zh: "谁今天喝过咖啡或奶茶？" },
+            { id: 152, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai thức dậy trước 7:00 sáng ngày hôm nay?", en: "Who woke up before 7:00 AM today?", zh: "谁今天早上7点前就起床了？" },
+            { id: 153, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đi ngủ sau 1:00 đêm vào tối qua?", en: "Who went to bed after 1:00 AM last night?", zh: "谁昨晚深夜1点以后才睡觉？" },
+            { id: 154, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã tập thể dục hoặc chơi thể thao hôm nay?", en: "Who worked out or exercised today?", zh: "谁今天锻炼身体或运动了？" },
+            { id: 155, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai tự lái xe ô tô hoặc xe máy đến đây tối nay?", en: "Who drove their own car or motorcycle here tonight?", zh: "谁今晚自己开车或骑摩托车来到这里？" },
+            { id: 156, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đi phương tiện công cộng hoặc gọi Grab/Taxi đến đây?", en: "Who took public transport or a ride-share to get here?", zh: "谁坐公共交通或网约车/出租车来这里的？" },
+            { id: 157, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã ăn đồ ăn nhanh (fast food) trong 24 giờ qua?", en: "Who ate fast food in the last 24 hours?", zh: "谁在过去24小时内吃过快餐？" },
+            { id: 158, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã ăn món cay trong ngày hôm nay?", en: "Who has eaten spicy food today?", zh: "谁今天吃过辣的食物？" },
+            { id: 159, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai tự tay nấu một bữa ăn từ nguyên liệu thô hôm nay?", en: "Who cooked a meal from scratch today?", zh: "谁今天自己亲手做了一顿饭？" },
+            { id: 160, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đang xức nước hoa thơm ngát lúc này?", en: "Who is wearing perfume or cologne right now?", zh: "谁现在身上喷了香水？" },
+            { id: 161, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đang có chùm chìa khóa trong túi quần lúc này?", en: "Who has keys in their pocket right now?", zh: "谁的口袋里现在装着钥匙？" },
+            { id: 162, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đang mang theo tiền mặt trong ví/túi ngay lúc này?", en: "Who carries cash in their wallet or pocket right now?", zh: "谁的钱包或口袋里现在带着现金？" },
+            { id: 163, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã bấm nút "Snooze" báo thức lùi lại sáng nay?", en: "Who hit the snooze button on their alarm this morning?", zh: "谁今天早上按了赖床/贪睡闹钟按钮？" },
+            { id: 164, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có bình đựng nước cá nhân trong tầm với lúc này?", en: "Who has a personal water bottle within reach right now?", zh: "谁随身带着个人水杯或水壶？" },
+            { id: 165, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã đi máy bay trong vòng 6 tháng qua?", en: "Who has traveled on an airplane in the last 6 months?", zh: "谁在过去6个月内坐过飞机旅行？" },
+            { id: 166, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã vô tình quên tên ai đó trong buổi gặp tối nay?", en: "Who has forgotten someone’s name in the group tonight?", zh: "谁今晚不小心忘了在场某个人的名字？" },
+            { id: 167, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã rửa chén bát hoặc làm việc nhà hôm nay?", en: "Who has washed dishes or done housework today?", zh: "谁今天洗过碗筷或做过家务？" },
+            { id: 168, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đã đặt đồ ăn giao tận nơi (delivery) gần đây?", en: "Who ordered food delivery recently?", zh: "谁最近叫过外卖送餐？" },
+            { id: 169, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai đang mang giày dép của các thương hiệu lớn (Nike, Adidas...)?", en: "Who is wearing branded footwear (Nike, Adidas, etc.)?", zh: "谁穿着知名品牌（耐克、阿迪等）的鞋子？" },
+            { id: 170, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen uống nước ấm ngay sau khi thức dậy?", en: "Who has the habit of drinking warm water right after waking up?", zh: "谁有刚醒来就喝温水的习惯？" },
+            { id: 171, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng ngủ quên trên xe buýt hoặc tàu điện đi quá trạm?", en: "Who has ever fallen asleep on public transit and missed their stop?", zh: "谁曾在公交车或地铁上睡着坐过站？" },
+            { id: 172, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen ăn vặt ban đêm (midnight snack)?", en: "Who has a habit of eating midnight snacks?", zh: "谁有吃夜宵的习惯？" },
+            { id: 173, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai không thể sống thiếu trà sữa hoặc cà phê mỗi ngày?", en: "Who cannot live without bubble tea or coffee every single day?", zh: "谁每天都离不开奶茶或咖啡？" },
+            { id: 174, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng mặc áo ngược hoặc quần ngược ra đường mà không hay biết?", en: "Who has ever worn their shirt or pants inside out in public without knowing?", zh: "谁曾把衣服或裤子穿反了出门却浑然不知？" },
+            { id: 175, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen cắn móng tay khi đang suy nghĩ?", en: "Who has the habit of biting their nails when deep in thought?", zh: "谁在思考时有咬指甲的习惯？" },
+            { id: 176, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng bước hụt cầu thang làm rơi điện thoại hoặc té ngã?", en: "Who has ever missed a stair step and stumbled or dropped things?", zh: "谁曾在楼梯上踩空摔倒或把东西摔落？" },
+            { id: 177, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen bẻ ngón tay kêu răng rắc?", en: "Who has the habit of cracking their knuckle joints?", zh: "谁有把手指关节按得咔咔响的习惯？" },
+            { id: 178, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai thường xuyên quên mang ô/dù khi trời sắp mưa?", en: "Who frequently forgets to bring an umbrella when it looks like rain?", zh: "谁经常在快要下雨时忘带雨伞？" },
+            { id: 179, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng tìm kiếm điện thoại của mình trong khi đang cầm nó trên tay?", en: "Who has searched for their phone while holding it in their hand?", zh: "谁曾手里拿着手机却到处找手机？" },
+            { id: 180, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen kiểm tra cửa nhà đã khóa chưa nhiều lần trước khi đi?", en: "Who checks if their front door is locked multiple times before leaving?", zh: "谁出门前会反反复复检查门锁了好几次？" },
+            { id: 181, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng để quên bếp gas hoặc bàn là (ủi đồ) khi ra khỏi nhà?", en: "Who has ever left the stove or iron on when leaving home?", zh: "谁曾出门时忘关煤气灶或熨斗？" },
+            { id: 182, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen nghe nhạc hoặc podcast khi tắm?", en: "Who has the habit of listening to music or podcasts while showering?", zh: "谁有洗澡时听音乐或播客的习惯？" },
+            { id: 183, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng ăn một mình tại nhà hàng sang trọng?", en: "Who has ever dined completely alone at a fancy restaurant?", zh: "谁曾独自一人在高档餐厅吃过饭？" },
+            { id: 184, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen đọc sách trước khi đi ngủ mỗi tối?", en: "Who has the habit of reading a book before sleeping every night?", zh: "谁每天晚上都有睡前看书的习惯？" },
+            { id: 185, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng mua vé xem phim một mình ra rạp?", en: "Who has ever bought a cinema ticket to watch a movie all alone?", zh: "谁曾自己一个人买电影票去电影院看电影？" },
+            { id: 186, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen gấp quần áo cực kỳ ngăn nắp vuông vức?", en: "Who has the habit of folding clothes super neatly and squarely?", zh: "谁有把衣服叠得整整齐齐方方正正的习惯？" },
+            { id: 187, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai là "cú đêm" chính hiệu thức đến 3-4 giờ sáng?", en: "Who is a certified night owl staying up until 3-4 AM?", zh: "谁是熬夜到凌晨3、4点的资深夜猫子？" },
+            { id: 188, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen ăn món ngon nhất để lại ăn cuối cùng?", en: "Who has the habit of saving the best piece of food for the very last bite?", zh: "谁吃东西时习惯把最好吃的那一口留在最后吃？" },
+            { id: 189, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng uống liền 2 ly cà phê một lúc vì quá buồn ngủ?", en: "Who has downed 2 cups of coffee at once because of extreme sleepiness?", zh: "谁因为太困曾一口气喝过两杯咖啡？" },
+            { id: 190, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen vừa đi vừa cắm mặt vào điện thoại nguy hiểm?", en: "Who has the dangerous habit of walking while staring at their phone?", zh: "谁有走路时一直盯着手机屏幕的危险习惯？" },
+            { id: 191, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng mua đồ tập gym nhưng chưa bao giờ đi tập?", en: "Who bought gym clothes/membership but has never actually gone?", zh: "谁买过健身装备或办了卡却一次都没去过？" },
+            { id: 192, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen mở tủ lạnh ra nhìn ngắm dù không đói?", en: "Who has the habit of opening the fridge just to stare inside when not hungry?", zh: "谁并不饿却总习惯打开冰箱门发呆？" },
+            { id: 193, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng ngủ gật trong cuộc họp hoặc lớp học chán ngắt?", en: "Who has fallen asleep during a boring meeting or class?", zh: "谁曾在无聊的会议或课堂上打瞌睡？" },
+            { id: 194, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen sưu tầm ly tách hoặc bình giữ nhiệt?", en: "Who has the habit of collecting mugs, cups, or thermal flasks?", zh: "谁有收集杯子或保温壶的爱好？" },
+            { id: 195, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng quên tắt đèn phòng tắm hoặc điều hòa khi ra ngoài?", en: "Who has ever left bathroom lights or AC on when going out?", zh: "谁出门时曾忘关卫生间灯或空调？" },
+            { id: 196, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen ghi chú (notes) mọi thứ vào điện thoại?", en: "Who has the habit of keeping notes on their phone for everything?", zh: "谁有把所有事情都记在手机备忘录里的习惯？" },
+            { id: 197, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng mua đồ nguyên giá rồi hôm sau thấy sale 50% tức ói máu?", en: "Who bought items at full price only to see them 50% off the next day?", zh: "谁刚买完原价商品第二天就看到打折心疼不已？" },
+            { id: 198, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai có thói quen rửa tay liên tục trong ngày?", en: "Who has the habit of washing their hands constantly throughout the day?", zh: "谁有在一天里频繁洗手的习惯？" },
+            { id: 199, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai từng đi siêu thị định mua 1 món rồi vác về cả xe đẩy?", en: "Who went to the supermarket for 1 item and came back with a full cart?", zh: "谁本打算去超市买一样东西却推回了一整车？" },
+            { id: 200, cat: 'lifestyle', catName: 'Thói Quen', vi: "Ai là người luôn đúng giờ hẹn trong mọi cuộc vui?", en: "Who is always punctually on time for every single gathering?", zh: "谁每次聚会都是最准时到达的人？" },
+
+            { id: 201, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng vô tình gửi tin nhắn nói xấu ai đó cho chính người đó?", en: "Who accidentally sent a gossip text to the very person it was about?", zh: "谁曾不小心把说坏话的信息发给了当事人？" },
+            { id: 202, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị gãy răng hoặc mẻ răng vì ăn đồ cứng?", en: "Who has ever chipped or broken a tooth while eating hard food?", zh: "谁曾因为吃硬东西而磕断或磕裂过牙齿？" },
+            { id: 203, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị kẹt trong thang máy ít nhất một lần?", en: "Who has ever been stuck inside an elevator?", zh: "谁曾经被困在电梯里过？" },
+            { id: 204, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị ngã xuống hồ nước hoặc biển khi đang mặc nguyên quần áo?", en: "Who has ever fallen into a pool or sea fully clothed?", zh: "谁曾穿着整套衣服不小心跌进水池或海里？" },
+            { id: 205, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ăn nhầm đồ hỏng hoặc hết hạn bị ngộ độc?", en: "Who has ever eaten spoiled or expired food and got sick?", zh: "谁曾误食过期变质的食物导致食物中毒？" },
+            { id: 206, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng tham gia chương trình truyền hình hoặc quay phim?", en: "Who has ever been on TV or in a film shoot?", zh: "谁曾上过电视节目或参与过拍戏？" },
+            { id: 207, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng trúng xổ số hoặc giải thưởng bốc thăm may mắn?", en: "Who has ever won a lottery or lucky draw prize?", zh: "谁曾中过彩票或抽奖大奖？" },
+            { id: 208, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai có thể chơi một loại nhạc cụ (guitar, piano...)?", en: "Who can play a musical instrument?", zh: "谁会弹奏某种乐器（吉他、钢琴等）？" },
+            { id: 209, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng đi lặn biển ngắm san hô (scuba diving/snorkeling)?", en: "Who has ever been scuba diving or snorkeling?", zh: "谁曾体验过深潜或浮潜看珊瑚？" },
+            { id: 210, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng hát karaoke trong phòng tối qua hoặc tháng qua?", en: "Who has sung karaoke in the past month?", zh: "谁在过去一个月内唱过卡拉OK？" },
+            { id: 211, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị lạc đường nghiêm trọng phải nhờ GPS cứu?", en: "Who has gotten severely lost using GPS in the past month?", zh: "谁最近曾严重迷路必须靠导航解救？" },
+            { id: 212, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng nhuộm tóc màu sặc sỡ (đỏ, vàng, xanh dương)?", en: "Who has ever dyed their hair a bright, unusual color?", zh: "谁曾把头发染成红、黄、蓝等鲜艳的非主流颜色？" },
+            { id: 213, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai đã xem phim ở rạp chiếu phim trong tháng này?", en: "Who has seen a movie in a cinema this month?", zh: "谁这个月去电影院看过电影？" },
+            { id: 214, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai có khả năng huýt sáo rất to và vang?", en: "Who can whistle extremely loudly?", zh: "谁能吹出非常响亮的口哨？" },
+            { id: 215, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai đã tham gia một buổi hòa nhạc (concert) trong năm nay?", en: "Who has been to a concert or live gig this year?", zh: "谁今年去听过演唱会或音乐节现场？" },
+            { id: 216, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng trả lại hàng hoặc đổi trả sản phẩm ở cửa hàng?", en: "Who has ever returned an item to a store for a refund?", zh: "谁曾去商店退货或换货过？" },
+            { id: 217, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai sở hữu ô tô hoặc phương tiện chạy hơn 5 năm?", en: "Who has owned a car/vehicle for more than 5 years?", zh: "谁拥有一辆车龄超过5年的座驾？" },
+            { id: 218, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng gặp người nổi tiếng/nghệ sĩ ngoài đời thực?", en: "Who has ever met a celebrity in real life?", zh: "谁在现实生活中亲眼见过大明星？" },
+            { id: 219, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng thức trắng đêm không ngủ (all-nighter) trong năm qua?", en: "Who has stayed up all night with zero sleep in the past year?", zh: "谁在过去一年里曾通宵熬夜完全不睡觉？" },
+            { id: 220, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị công an giao thông phạt thẻ vàng/phạt tiền?", en: "Who has ever gotten a traffic ticket or police fine?", zh: "谁曾吃过交通罚单或被交警罚款？" },
+            { id: 221, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị ngã gãy xương hoặc nứt xương trong đời?", en: "Who has ever broken or fractured a bone?", zh: "谁一生中曾骨折或裂过骨头？" },
+            { id: 222, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng trèo tường trốn ra ngoài khi còn đi học?", en: "Who has ever climbed over a school wall to sneak out?", zh: "谁上学时曾翻墙逃学过？" },
+            { id: 223, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ăn trộm vặt đồ ăn của bạn cùng phòng khi sinh viên?", en: "Who has ever stolen a roommate's snacks back in college?", zh: "谁大学时偷吃过室友藏的零食？" },
+            { id: 224, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị đuổi học hoặc kỷ luật nặng thời đi học?", en: "Who has ever been suspended or faced severe discipline in school?", zh: "谁上学时曾被停学过或受过严重纪律处分？" },
+            { id: 225, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng tham gia cuộc thi ca hát và bị loại vòng gửi xe?", en: "Who entered a singing contest and got eliminated in the first round?", zh: "谁参加过歌唱比赛却在海选第一轮就被淘汰？" },
+            { id: 226, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng làm rơi điện thoại xuống biển hoặc cống không vớt được?", en: "Who lost a phone permanently in the sea or a drainage gutter?", zh: "谁曾把手机掉进大海或下水道再也捞不回来？" },
+            { id: 227, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị kẹt giữa đường vì xe hết xăng hoặc thủng lốp?", en: "Who got stranded on the road due to running out of gas or a flat tire?", zh: "谁曾在路上因为车没油或爆胎而被困住？" },
+            { id: 228, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ăn mừng hụt vì tưởng mình trúng thưởng lớn?", en: "Who has ever prematurely celebrated thinking they won big?", zh: "谁曾以为自己中了大奖而空欢喜一场？" },
+            { id: 229, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ký hợp đồng mà không thèm đọc kỹ điều khoản nhỏ?", en: "Who has signed a contract without reading the fine print?", zh: "谁签合同时从来不看密密麻麻的小字条款？" },
+            { id: 230, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị nhầm là nhân viên phục vụ khi đi mua sắm?", en: "Who has been mistaken for a store clerk while shopping?", zh: "谁去商场购物时曾被其他顾客误认为店员？" },
+            { id: 231, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng đi xem bói và nghe những lời tiên đoán cực kỳ tào lao?", en: "Who has ever visited a fortune teller and heard ridiculous predictions?", zh: "谁曾听过极其离谱荒谬的算命预言？" },
+            { id: 232, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng làm vỡ đồ giá trị trong cửa hàng nhưng phải đền tiền?", en: "Who broke an expensive item inside a shop and had to pay for it?", zh: "谁曾在商店里打碎贵重物品并不得不赔钱？" },
+            { id: 233, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng khóc nức nở vì một bộ phim hoạt hình hoặc phim ảnh?", en: "Who has ever cried their eyes out watching a movie or anime?", zh: "谁曾因为看电影或动漫感动得痛哭流涕？" },
+            { id: 234, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ngủ mơ màng rồi nói lảm nhảm những câu vô nghĩa?", en: "Who has ever sleep-talked and blurted out total nonsense?", zh: "谁曾在睡梦中说胡话吐露过无厘头的话？" },
+            { id: 235, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ăn cay đến mức chảy nước mắt nước mũi ròng ròng?", en: "Who has eaten something so spicy it made their eyes and nose run?", zh: "谁曾吃辣到眼泪鼻涕直流？" },
+            { id: 236, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng thử bẻ khóa mật khẩu máy tính của người khác tò mò?", en: "Who has tried cracking someone else's computer password out of curiosity?", zh: "谁出于好奇曾试图破解别人的电脑密码？" },
+            { id: 237, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng nhặt được tiền rơi trên đường và đem nộp công an/giữ lại?", en: "Who has found money dropped on the street?", zh: "谁曾在街上捡到过别人掉落的钱？" },
+            { id: 238, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng thử cắt tóc mái cho mình và kết quả là thảm họa?", en: "Who has ever tried cutting their own bangs and ruined it?", zh: "谁曾自己在家剪刘海结果剪成了灾难？" },
+            { id: 239, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng tham gia chạy marathon hoặc giải chạy việt dã?", en: "Who has participated in a marathon or cross-country running race?", zh: "谁参加过马拉松或越野跑步比赛？" },
+            { id: 240, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng viết thư tình hoặc tỏ tình bị từ chối phũ phàng?", en: "Who has written a love letter or confessed and got brutally rejected?", zh: "谁写过情书或表白却遭到残酷拒绝？" },
+            { id: 241, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng tham gia cứu hộ động vật hoặc nuôi mèo hoang?", en: "Who has rescued stray animals or fostered stray cats/dogs?", zh: "谁曾救助过流浪动物或收养流浪猫狗？" },
+            { id: 242, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng đi du lịch một mình đến quốc gia không nói tiếng mẹ đẻ?", en: "Who traveled solo to a country where they didn't speak the language?", zh: "谁曾独自一人去一个语言不通的国家旅行？" },
+            { id: 243, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị trộm cắp ví tiền hoặc điện thoại khi đi du lịch?", en: "Who has ever had their wallet or phone stolen while traveling?", zh: "谁在旅游时钱包或手机被小偷扒过？" },
+            { id: 244, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng tham gia một trò chơi mạo hiểm như nhảy bungee hoặc dù lượn?", en: "Who has done an extreme sport like bungee jumping or paragliding?", zh: "谁玩过蹦极或滑翔伞等极限运动？" },
+            { id: 245, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng làm bồi bàn hoặc nhân viên pha chế trong quá khứ?", en: "Who has worked as a waiter or bartender in the past?", zh: "谁过去当过服务员或调酒师？" },
+            { id: 246, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng vô tình gây tai nạn giao thông nhỏ va quẹt xe?", en: "Who has ever gotten into a minor vehicle fender-bender accident?", zh: "谁曾发生过轻微的车辆擦挂小事故？" },
+            { id: 247, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng leo núi cao ngắm bình minh?", en: "Who has climbed a high mountain to watch the sunrise?", zh: "谁曾爬过高山看日出？" },
+            { id: 248, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng bị cúm nặng phải nằm viện truyền nước biển?", en: "Who has had severe flu that required hospital IV drips?", zh: "谁曾得过重感冒严重到去医院挂水输液？" },
+            { id: 249, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai từng ăn một lúc hết 2 tô phở hoặc 2 phần ăn lớn?", en: "Who has eaten two giant bowls of noodles or meals in one sitting?", zh: "谁曾一口气吃下过两碗面或两份大餐？" },
+            { id: 250, cat: 'experience', catName: 'Trải Nghiệm', vi: "Ai là người có nhiều câu chuyện cười "bựa" nhất nhóm?", en: "Who has the most hilarious and absurd stories in the group?", zh: "谁是群里拥有最多搞笑离奇故事的人？" },
+
+            { id: 251, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hô "1-2-3 Zô" to nhất bàn tiệc tối nay?", en: "Who yelled "1-2-3 Cheers!" the loudest at the table tonight?", zh: "谁今晚在桌上喊“1-2-3 干杯！”喊得最大声？" },
+            { id: 252, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có điệu cười độc lạ nhất nhóm làm cả bàn cười theo?", en: "Who has the most unique laugh that makes everyone else laugh?", zh: "谁的笑声最独特，能带着全场一起笑？" },
+            { id: 253, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người từng giả vờ nghe điện thoại để né cuộc trò chuyện vô duyên?", en: "Who has ever pretended to receive a call to escape an awkward conversation?", zh: "谁曾假装接电话来逃避尴尬的对话？" },
+            { id: 254, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai đang có nụ cười tỏa nắng nhất bàn tối nay?", en: "Who has the brightest, most radiant smile at the table tonight?", zh: "谁今晚笑得最阳光灿烂？" },
+            { id: 255, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có khả năng pha trò dở tệ nhưng vẫn thích kể?", en: "Who loves telling terrible dad jokes despite how bad they are?", zh: "谁明知道自己讲的笑话很冷很烂却还是爱讲？" },
+            { id: 256, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người uống nước nhanh nhất trong bàn?", en: "Who is the fastest drinker at the table?", zh: "谁是桌上喝水喝酒最快的人？" },
+            { id: 257, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có phong cách ăn mặc sành điệu và nổi bật nhất tối nay?", en: "Who has the most stylish and striking outfit tonight?", zh: "谁今晚的穿搭最时髦抢眼？" },
+            { id: 258, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "thánh selfie" chụp ảnh tự sướng nhiều nhất?", en: "Who is the ultimate selfie master taking the most photos?", zh: "谁是自拍拍得最多的自拍达人？" },
+            { id: 259, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có đôi mắt biết nói và biểu cảm khuôn mặt phong phú nhất?", en: "Who has the most expressive eyes and facial expressions?", zh: "谁的眼神最会说话、面部表情最丰富？" },
+            { id: 260, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người dễ bị đỏ mặt khi uống chút đồ có cồn?", en: "Who gets red-faced easily after drinking a little alcohol?", zh: "谁喝一点酒脸就容易红？" },
+            { id: 261, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có tửu lượng (khả năng uống) tốt nhất nhóm này?", en: "Who has the highest alcohol tolerance in this group?", zh: "这里谁的酒量最好？" },
+            { id: 262, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay ngáp ngủ nhất từ đầu buổi đến giờ?", en: "Who has been yawning the most since the gathering started?", zh: "谁从聚会开始到现在哈欠打得最多？" },
+            { id: 263, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai có dáng ngồi thoải mái bất chấp hình tượng nhất?", en: "Who has the most relaxed and carefree sitting posture?", zh: "谁坐姿最随意、完全不在乎偶像包袱？" },
+            { id: 264, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay bấm điện thoại ngắt quãng cuộc trò chuyện?", en: "Who keeps checking their phone and disrupting the conversation?", zh: "谁总是边聊天边忍不住看手机？" },
+            { id: 265, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có giọng ca "thảm họa" khi hát hò?", en: "Who has the funniest "disaster" singing voice?", zh: "谁唱歌时的声音堪称“灾难”却很有自信？" },
+            { id: 266, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người biết nhiều tin đồn (gossip) số dzách nhất?", en: "Who knows the juiciest gossip in town?", zh: "谁知道的八卦消息最多最劲爆？" },
+            { id: 267, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay quên vặt (quên chìa khóa, quên ví, quên điện thoại)?", en: "Who is the most forgetful (keys, wallet, phone)?", zh: "谁是个大头虾经常忘东忘西（钥匙、钱包、手机）？" },
+            { id: 268, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "thánh ăn vặt" lúc nào trong túi cũng có kẹo bánh?", en: "Who is the snack master who always has candies in their bag?", zh: "谁是零食大王，包里随时装着糖果零食？" },
+            { id: 269, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người pha đồ uống ngon nhất bàn?", en: "Who is the best beverage mixer at the table?", zh: "谁是桌上调酒或倒饮料技术最好的人？" },
+            { id: 270, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay cười nguyên hàm răng trắng sáng nhất?", en: "Who smiles showing their full bright set of teeth?", zh: "谁笑起来总是露出一口洁白的牙齿？" },
+            { id: 271, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có tướng ngủ khó đỡ nhất (ngáy, há miệng)?", en: "Who has the funniest sleeping habits (snoring, open mouth)?", zh: "谁睡觉的睡相最搞笑（打呼噜、张大嘴巴）？" },
+            { id: 272, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay trễ giờ nhất trong mọi buổi hẹn hò?", en: "Who is always late for every single meetup?", zh: "谁每次聚会约定时都是迟到大王？" },
+            { id: 273, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "chủ tịch" hay giành trả tiền (bill) cho cả nhóm?", en: "Who is the "boss" who always insists on paying the bill for everyone?", zh: "谁每次抢着买单请客？" },
+            { id: 274, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay chợp mắt tranh thủ ngủ mọi lúc mọi nơi?", en: "Who can fall asleep and take a nap anywhere anytime?", zh: "谁随时随地都能抓紧时间打个盹？" },
+            { id: 275, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người giỏi biểu diễn ảo thuật hoặc trò vui bằng tay nhất?", en: "Who is good at performing magic tricks or hand games?", zh: "谁擅长表演魔术或手部小把戏？" },
+            { id: 276, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay dùng biểu tượng cảm xúc (emoji) dễ thương nhất?", en: "Who uses the cutest emojis in chats?", zh: "谁在聊天时发最可爱的表情包？" },
+            { id: 277, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có gu âm nhạc độc đáo và khác biệt nhất?", en: "Who has the most unique and distinctive music taste?", zh: "谁的音乐品味最独特与众不同？" },
+            { id: 278, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "bậc thầy" lý sự cãi cùn thắng mọi cuộc tranh luận?", en: "Who is the master arguer who wins debates with flawed logic?", zh: "谁是诡辩大师，总能用歪理把别人说服？" },
+            { id: 279, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay thốt lên "Trời ơi tin được không" nhiều nhất?", en: "Who frequently exclaims "Oh my god, no way!"?", zh: "谁经常惊呼“天呐怎么可能！”？" },
+            { id: 280, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người sờ điện thoại đầu tiên ngay khi thức dậy?", en: "Who touches their phone the absolute second they wake up?", zh: "谁一睁开眼睛醒来的第一件事就是摸手机？" },
+            { id: 281, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có tướng chạy bộ hài hước nhất?", en: "Who has the funniest running form?", zh: "谁跑步时的姿势最滑稽好笑？" },
+            { id: 282, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay xả thân chụp ảnh dìm hàng bạn bè nhất?", en: "Who is always snapping unflattering blackmail photos of friends?", zh: "谁最喜欢拍朋友的丑照黑历史？" },
+            { id: 283, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có trí nhớ siêu phàm nhớ sạch mọi chuyện cũ?", en: "Who has a superhuman memory remembering all past details?", zh: "谁拥有超强记忆力，陈年往事都记得清清楚楚？" },
+            { id: 284, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay làm rơi vãi đồ ăn hoặc đổ nước nhất bàn?", en: "Who drops food or spills drinks the most at the table?", zh: "谁在桌上吃饭最容易掉渣或把水洒出来？" },
+            { id: 285, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "chuyên gia" khuyên tình yêu nhưng độc thân lâu năm?", en: "Who is the "relationship expert" advisor who has been single for years?", zh: "谁是单身多年的恋爱军师？" },
+            { id: 286, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay có những ý tưởng kinh doanh kỳ quặc nhất?", en: "Who always comes up with the most bizarre business ideas?", zh: "谁脑子里总有各种稀奇古怪的创业点子？" },
+            { id: 287, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có tài lẻ nhại tiếng động hoặc tiếng vật nuôi?", en: "Who has the talent of imitating animal sounds or noises?", zh: "谁擅长模仿动物叫声或各种音效？" },
+            { id: 288, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người phản ứng chậm nhất khi mọi người đang cười?", en: "Who has the slowest reaction time when everyone else is laughing?", zh: "当大家都在笑时谁的反应总是慢半拍？" },
+            { id: 289, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay tự khen mình đẹp trai/xinh gái nhất?", en: "Who constantly praises themselves for being gorgeous?", zh: "谁最喜欢自恋夸自己长得最好看？" },
+            { id: 290, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có tiếng hét to điếc tai trong trò chơi cảm giác mạnh?", en: "Who screams the loudest on thrilling amusement rides?", zh: "谁玩惊险游乐设施时尖叫声最大？" },
+            { id: 291, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là "thánh ăn cay" có thể ăn ớt tươi nguyên trái?", en: "Who is the spicy master who can eat raw chili peppers directly?", zh: "谁是能直接生吃辣椒的吃辣大王？" },
+            { id: 292, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay nhắm tịt mắt mỗi khi gặp chuyện bất ngờ?", en: "Who tightly closes their eyes whenever startled or surprised?", zh: "谁遇到突发惊吓时总是把眼睛闭得紧紧的？" },
+            { id: 293, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có bàn tay ấm áp nhất nhóm?", en: "Who has the warmest hands in the group?", zh: "谁的手掌温度最温暖？" },
+            { id: 294, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay có những câu nói triết lý "ông cụ non"?", en: "Who often says wise old-soul philosophical quotes?", zh: "谁经常说出一些老气横秋的哲理名言？" },
+            { id: 295, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người chụp ảnh nhóm có tâm nhất, luôn chọn góc đẹp?", en: "Who takes the most thoughtful group photos framing everyone well?", zh: "谁每次拍合照时最用心、总能把大家拍得很美？" },
+            { id: 296, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người sở hữu nhiều ốp lưng điện thoại kỳ quặc nhất?", en: "Who owns the most bizarre and quirky phone cases?", zh: "谁拥有最多奇形怪状的手机壳？" },
+            { id: 297, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người hay bị nhầm lẫn giữa trái và phải?", en: "Who frequently gets confused between left and right?", zh: "谁分不清左右方向经常走错？" },
+            { id: 298, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người có nốt ruồi hoặc đặc điểm cơ thể độc đáo nhất?", en: "Who has the most unique birthmark or body feature?", zh: "谁身上有最独特的胎记或身体特征？" },
+            { id: 299, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người luôn kết thúc buổi tiệc muộn nhất?", en: "Who is always the absolute last person to leave a party?", zh: "谁每次聚会都是最后一个离场的人？" },
+            { id: 300, cat: 'fun', catName: 'Vui Nhộn', vi: "Ai là người đang cầm ly chuẩn bị uống phạt ngay bây giờ?", en: "Who is holding their cup ready to take a penalty drink right now?", zh: "谁现在正端着杯子准备接受罚酒？" }
+        ];
+
+        let customItems = JSON.parse(localStorage.getItem('hit_drink_custom')) || [];
+        let allItems = [...baseItems, ...customItems];
+        let currentCategory = 'all';
+        let activeDeck = [...allItems];
+        let playedQueue = [];
+        let currentCard = null;
+        let drinkCount = parseInt(localStorage.getItem('hit_drink_count')) || 0;
+        let soundEnabled = true;
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        const sfx = {
+            playPop() {
+                if (!soundEnabled) return;
+                try {
+                    initAudio();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                } catch(e) {}
+            },
+            playCheers() {
+                if (!soundEnabled) return;
+                try {
+                    initAudio();
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+                        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.08 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(audioCtx.currentTime + idx * 0.08);
+                        osc.stop(audioCtx.currentTime + idx * 0.08 + 0.3);
+                    });
+                } catch(e) {}
+            }
+        };
+
+        const cardPromptVi = document.getElementById('card-prompt-vi');
+        const cardPromptEn = document.getElementById('card-prompt-en');
+        const cardPromptZh = document.getElementById('card-prompt-zh');
+        const cardCategoryBadge = document.getElementById('card-category-badge');
+        const cardIndexIndicator = document.getElementById('card-index-indicator');
+        const deckCountEl = document.getElementById('deck-count');
+        const currentCategoryNameEl = document.getElementById('current-category-name');
+        const drinkCountValEl = document.getElementById('drink-count-val');
+        
+        const btnDraw = document.getElementById('btn-draw');
+        const btnSound = document.getElementById('btn-sound');
+        const soundStatus = document.getElementById('sound-status');
+        const btnList = document.getElementById('btn-list');
+        const btnDrinkCounter = document.getElementById('btn-drink-counter');
+        const btnResetDeck = document.getElementById('btn-reset-deck');
+        const btnAddCustom = document.getElementById('btn-add-custom');
+
+        const listModal = document.getElementById('list-modal');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const modalListContainer = document.getElementById('modal-list-container');
+        const modalTotalCount = document.getElementById('modal-total-count');
+        const modalSearch = document.getElementById('modal-search');
+
+        const customModal = document.getElementById('custom-modal');
+        const btnCloseCustom = document.getElementById('btn-close-custom');
+        const btnSaveCustom = document.getElementById('btn-save-custom');
+        const customVi = document.getElementById('custom-vi');
+        const customEn = document.getElementById('custom-en');
+        const customZh = document.getElementById('custom-zh');
+        const customCat = document.getElementById('custom-cat');
+
+        const completionModal = document.getElementById('completion-modal');
+        const btnRestartGame = document.getElementById('btn-restart-game');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+
+        function initApp() {
+            drinkCountValEl.textContent = drinkCount;
+            filterDeck('all', false);
+            drawCard(false);
+            setupEventListeners();
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function filterDeck(catKey, autoDraw = true) {
+            currentCategory = catKey;
+            
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if(btn.getAttribute('data-cat') === catKey) {
+                    btn.className = "cat-btn whitespace-nowrap bg-pink-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-md transition";
+                } else {
+                    btn.className = "cat-btn whitespace-nowrap bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-700 transition";
+                }
+            });
+
+            let pool = catKey === 'all' ? [...allItems] : allItems.filter(item => item.cat === catKey);
+            activeDeck = shuffle(pool);
+            playedQueue = [];
+
+            const catNames = {
+                'all': `Tất Cả (${allItems.length})`,
+                'physical': '👤 Ngoại Hình',
+                'history': '🌍 Lịch Sử & Cá Nhân',
+                'tech': '📱 Công Nghệ & Số',
+                'lifestyle': '☕ Thói Quen & Đời Sống',
+                'experience': '🎭 Trải Nghiệm & Bí Mật',
+                'fun': '🎉 Vui Nhộn & Thử Thách'
+            };
+            currentCategoryNameEl.textContent = catNames[catKey];
+            deckCountEl.textContent = activeDeck.length;
+
+            if (autoDraw) {
+                drawCard();
+            }
+        }
+
+        function drawCard() {
+            if (activeDeck.length === 0) {
+                sfx.playCheers();
+                showCompletionModal();
+                return;
+            }
+
+            sfx.playPop();
+            currentCard = activeDeck.pop();
+            playedQueue.push(currentCard);
+
+            cardPromptVi.textContent = currentCard.vi;
+            cardPromptEn.textContent = currentCard.en;
+            cardPromptZh.textContent = currentCard.zh;
+            cardCategoryBadge.textContent = currentCard.catName;
+            
+            const totalInPool = activeDeck.length + playedQueue.length;
+            cardIndexIndicator.textContent = `#${playedQueue.length} / ${totalInPool}`;
+            deckCountEl.textContent = activeDeck.length;
+
+            const cardEl = document.getElementById('game-card');
+            cardEl.classList.add('scale-95', 'opacity-80');
+            setTimeout(() => {
+                cardEl.classList.remove('scale-95', 'opacity-80');
+            }, 150);
+        }
+
+        function resetDeck() {
+            let pool = currentCategory === 'all' ? [...allItems] : allItems.filter(item => item.cat === currentCategory);
+            activeDeck = shuffle(pool);
+            playedQueue = [];
+            deckCountEl.textContent = activeDeck.length;
+            drawCard();
+        }
+
+        function showCompletionModal() {
+            completionModal.classList.remove('hidden');
+            startConfetti();
+        }
+
+        function hideCompletionModal() {
+            completionModal.classList.add('hidden');
+            stopConfetti();
+        }
+
+        let confettiInterval = null;
+        function startConfetti() {
+            confettiCanvas.classList.remove('hidden');
+            const ctx = confettiCanvas.getContext('2d');
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+
+            let particles = [];
+            const colors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                    r: Math.random() * 6 + 4,
+                    dx: Math.random() * 4 - 2,
+                    dy: Math.random() * 5 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10 - 10,
+                    tiltAngleInc: Math.random() * 0.07 + 0.05,
+                    tiltAngle: 0
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                particles.forEach((p, index) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                    ctx.stroke();
+
+                    p.y += p.dy;
+                    p.x += p.dx;
+                    p.tiltAngle += p.tiltAngleInc;
+                    p.tilt = Math.sin(p.tiltAngle) * 15;
+
+                    if (p.y > confettiCanvas.height) {
+                        particles[index] = {
+                            x: Math.random() * confettiCanvas.width,
+                            y: -20,
+                            r: p.r,
+                            dx: p.dx,
+                            dy: p.dy,
+                            color: p.color,
+                            tilt: p.tilt,
+                            tiltAngleInc: p.tiltAngleInc,
+                            tiltAngle: p.tiltAngle
+                        };
+                    }
+                });
+            }
+
+            confettiInterval = setInterval(draw, 20);
+        }
+
+        function stopConfetti() {
+            clearInterval(confettiInterval);
+            const ctx = confettiCanvas.getContext('2d');
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiCanvas.classList.add('hidden');
+        }
+
+        function renderModalList(filterText = '') {
+            modalListContainer.innerHTML = '';
+            let filtered = allItems.filter(item => 
+                item.vi.toLowerCase().includes(filterText.toLowerCase()) ||
+                item.en.toLowerCase().includes(filterText.toLowerCase()) ||
+                item.zh.toLowerCase().includes(filterText.toLowerCase()) ||
+                item.catName.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            modalTotalCount.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                modalListContainer.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm">Không tìm thấy tiêu chí phù hợp.</div>`;
+                return;
+            }
+
+            filtered.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col space-y-2 hover:border-slate-700 transition";
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs bg-slate-900 border border-slate-800 text-pink-400 px-2.5 py-0.5 rounded-full font-bold uppercase">${item.catName}</span>
+                        <span class="text-xs text-slate-500 font-bold">#${idx + 1}</span>
+                    </div>
+                    <p class="text-sm font-bold text-slate-100">${item.vi}</p>
+                    <p class="text-xs italic text-indigo-300 font-medium">${item.en}</p>
+                    <p class="text-xs text-emerald-300">${item.zh}</p>
+                `;
+                modalListContainer.appendChild(div);
+            });
+        }
+
+        function setupEventListeners() {
+            btnDraw.addEventListener('click', drawCard);
+            document.getElementById('game-card').addEventListener('click', drawCard);
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const cat = e.target.getAttribute('data-cat');
+                    filterDeck(cat);
+                });
+            });
+
+            btnSound.addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                soundStatus.textContent = soundEnabled ? 'Bật' : 'Tắt';
+                btnSound.className = soundEnabled ? 
+                    "bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-700 transition flex items-center space-x-1" :
+                    "bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 px-3 py-1.5 rounded-full text-xs font-semibold border border-rose-800 transition flex items-center space-x-1";
+            });
+
+            btnDrinkCounter.addEventListener('click', () => {
+                drinkCount++;
+                drinkCountValEl.textContent = drinkCount;
+                localStorage.setItem('hit_drink_count', drinkCount);
+                sfx.playCheers();
+            });
+
+            btnResetDeck.addEventListener('click', resetDeck);
+
+            btnList.addEventListener('click', () => {
+                renderModalList();
+                listModal.classList.remove('hidden');
+            });
+            btnCloseModal.addEventListener('click', () => {
+                listModal.classList.add('hidden');
+            });
+            modalSearch.addEventListener('input', (e) => {
+                renderModalList(e.target.value);
+            });
+
+            btnAddCustom.addEventListener('click', () => {
+                customModal.classList.remove('hidden');
+            });
+            btnCloseCustom.addEventListener('click', () => {
+                customModal.classList.add('hidden');
+            });
+            btnSaveCustom.addEventListener('click', () => {
+                const viText = customVi.value.trim();
+                const enText = customEn.value.trim() || viText;
+                const zhText = customZh.value.trim() || viText;
+                const catKey = customCat.value;
+
+                if (!viText) {
+                    alert('Vui lòng nhập nội dung Tiếng Việt cho thẻ mới!');
+                    return;
+                }
+
+                const catNamesMap = {
+                    'physical': '👤 Ngoại Hình',
+                    'history': '🌍 Lịch Sử',
+                    'tech': '📱 Công Nghệ',
+                    'lifestyle': '☕ Thói Quen',
+                    'experience': '🎭 Trải Nghiệm',
+                    'fun': '🎉 Vui Nhộn'
+                };
+
+                const newItem = {
+                    id: allItems.length + 1,
+                    cat: catKey,
+                    catName: catNamesMap[catKey],
+                    vi: viText,
+                    en: enText,
+                    zh: zhText
+                };
+
+                customItems.push(newItem);
+                allItems.push(newItem);
+                localStorage.setItem('hit_drink_custom', JSON.stringify(customItems));
+
+                customVi.value = '';
+                customEn.value = '';
+                customZh.value = '';
+                customModal.classList.add('hidden');
+
+                if (currentCategory === 'all' || currentCategory === catKey) {
+                    filterDeck(currentCategory, false);
+                }
+                alert('Đã thêm thẻ mới thành công vào bộ thẻ!');
+            });
+
+            btnRestartGame.addEventListener('click', () => {
+                hideCompletionModal();
+                resetDeck();
+            });
+
+            listModal.addEventListener('click', (e) => {
+                if (e.target === listModal) listModal.classList.add('hidden');
+            });
+            customModal.addEventListener('click', (e) => {
+                if (e.target === customModal) customModal.classList.add('hidden');
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
